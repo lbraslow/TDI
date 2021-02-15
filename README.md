@@ -1,13 +1,13 @@
-## TDI
+# TDI
 Notebooks for TDI application proof of concept
 
-# Introduction 
+## Introduction 
 
 Political data science relies heavily on predictive models of voter behavior to inform targeting of campaign resources to individuals and groups.  In the wake of the 2020 general election, data scientists are focusing significant attention and resources to analyzing election results and identifying opportunities to improve existing targeting approaches.  Modeling generally addresses one (or more) of three major tactics used in campaigns - voter registration (influencing someone who is eligible to vote but not registered to become registered), mobilization (influencing someone who is registered to actually vote), and persuasion (influencing a voter to choose a specific candidate).  Typically campaigns will target likely supporters for registration and mobilization efforts, to ensure that they actually cast their ballots, while reserving persuasion resources for registered voters who are believed to be movable or "swing" with regard to the candidates on the ballot.
 
 While many specific campaign tactics are important and deserving of further study, the voter registration to mobilization pathway is historically understudied due to data limitations.  However, conceptually this pathway is believed to be highly efficient, in both the short term and the longer term.  There is some evidence that newly registered voters are more likely than previously registered voters to actually cast a ballot in the election when they first become registered, particularly with ongoing outreach and engagement from campaigns or civic engagement organizations.  Moreover, registering a new voter increases the number of registered voters who can be mobilized in future elections.  Finally, voter registration efforts can begin well before election day (or the beginning of early voting or vote by mail), so these provide an opportunity for campaigns to begin engaging and mobilizing likely supporters in the community early and build their engagement over time leading up to election day.  These efforts are more efficient and cost-effective than ever given the rapid expansion of digital organizing, particularly in the 2020 cycle since more traditional field organizing tactics were severely limited due to the COVID-19 pandemic.
 
-# Data Sources 
+## Data Sources 
 
 For this project, I will integrate data from multiple distinct sources to quantify the relationship between new voter registration and turnout, and to identify the impact of newly registered voters on electoral outcomes.  I will also identify (or estimate) the demographic mix of newly registered voters, particularly whether they fall into key demographic segments of the "Rising American Electorate" or RAE, and their potential impact on electoral outcomes given estimates of their likely voting behavior.  
 
@@ -23,7 +23,7 @@ For this project, I will integrate data from multiple distinct sources to quanti
 
 I am also very interested in adding a digital organizing / social listening angle to this project, using data from one or more of the social or search platform APIs to identify any correlation between online discourse (organic and/or paid ads) about registering to vote and actual voter registration trends by date.  I have not yet identified an appropriate solution to pull historical data in a usable format that is publicly available, but will be exploring this further.
 
-# Proof of Concept
+## Proof of Concept
 
 While this is clearly a more extensive project, as a proof of concept I have provided two plots and some sample code.
 
