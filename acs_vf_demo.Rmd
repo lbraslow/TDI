@@ -1,0 +1,236 @@
+---
+title: "TDI Application Proof of Concept - Levi Braslow - 2/15/2021"
+output: html_notebook
+---
+
+```{r}
+## ACS data pulls and compilation 
+
+# Set up Census API
+Sys.setenv(CENSUS_KEY="e41fb5bed4f7dba9e5ef1734c58432a38606ffa1")  # In a production environment this key would be carried as a parameter and reference an environment credentials/secrets manager
+
+# Define ACS data elements to be pulled by variable name
+acs_vars <- c("NAME", 
+              "B00001_001E",
+              "B01001_001E", 
+              "B05003_009E", 
+              "B05003_011E", 
+              "B05003_020E", 
+              "B05003_022E", 
+              "B05003H_009E", 
+              "B05003H_011E", 
+              "B05003H_020E", 
+              "B05003H_022E", 
+              "B05003B_009E", 
+              "B05003B_011E", 
+              "B05003B_020E", 
+              "B05003B_022E", 
+              "B05003I_009E", 
+              "B05003I_011E", 
+              "B05003I_020E", 
+              "B05003I_022E", 
+              "B17020_002E",
+              "B17020_006E",
+              "B17020_007E",
+              "B17020_008E",
+              "B17020_009E",
+              "B17020_014E",
+              "B17020_015E",
+              "B17020_016E",
+              "B17020_017E",
+              "B17025_002E",
+              "B17025_003E",
+              "B17025_007E",
+              "B17025_009E",
+              "B17025_010E",
+              "B17025_014E",
+              "B29001_001E", 
+              "B29003_001E", 
+              "B29003_002E", 
+              "B19013_001E", 
+              "B25003_001E", 
+              "B25003_002E", 
+              "B25003_003E"
+              )
+
+# Pull identified ACS data elements from API for sample geo levels (state, county, zip) and add recodes
+df_acs_state <- getCensus(name = "acs/acs5", vintage = 2018, vars = acs_vars, region = "state") %>% mutate(acs_geo_type = "State")
+df_acs_county <- getCensus(name = "acs/acs5", vintage = 2018, vars = acs_vars, region = "county") %>% mutate(acs_geo_type = "County")
+df_acs_zip <- getCensus(name = "acs/acs5", vintage = 2018, vars = acs_vars, region = "zip code tabulation area") %>% mutate(acs_geo_type = "Zip")
+df_acs_zip$NAME = paste(df_acs_zip$zip_code_tabulation_area)
+
+# Create name field for states (prior to rbind)
+right = function(text, num_char) {
+  substr(text, nchar(text) - (num_char-1), nchar(text))
+}
+
+meta_state_fips <- mutate(meta_state_fips, STATE_CHAR = "")
+meta_state_fips$STATE_CHAR = paste("0",meta_state_fips$STATE)
+meta_state_fips$STATE_CHAR <- gsub(" ","",meta_state_fips$STATE_CHAR,ignore.case = TRUE)
+meta_state_fips$STATE_CHAR <- right(meta_state_fips$STATE_CHAR, 2)
+df_acs_state <- mutate(df_acs_state, NAME = "")
+df_acs_state <- left_join(df_acs_state, meta_state_fips, by = c("state" = "STATE_CHAR"), copy = FALSE, suffix = c(".x", ".y"))
+df_acs_state$NAME = paste(df_acs_state$STATE_NAME)
+
+# Standardize ACS geo tables to have the same variables (prior to rbind)
+acs_vars_2 <- c("acs_geo_type",
+                       "NAME",
+                       "B00001_001E",
+                       "B01001_001E", 
+                       "B05003_009E", 
+                       "B05003_011E", 
+                       "B05003_020E", 
+                       "B05003_022E", 
+                       "B05003H_009E", 
+                       "B05003H_011E", 
+                       "B05003H_020E", 
+                       "B05003H_022E", 
+                       "B05003B_009E", 
+                       "B05003B_011E", 
+                       "B05003B_020E", 
+                       "B05003B_022E", 
+                       "B05003I_009E", 
+                       "B05003I_011E", 
+                       "B05003I_020E", 
+                       "B05003I_022E",
+                       "B17020_002E",
+                       "B17020_006E",
+                       "B17020_007E",
+                       "B17020_008E",
+                       "B17020_009E",
+                       "B17020_014E",
+                       "B17020_015E",
+                       "B17020_016E",
+                       "B17020_017E",
+                       "B17025_002E",
+                       "B17025_003E",
+                       "B17025_007E",
+                       "B17025_009E",
+                       "B17025_010E",
+                       "B17025_014E",
+                       "B29001_001E", 
+                       "B29003_001E", 
+                       "B29003_002E", 
+                       "B19013_001E", 
+                       "B25003_001E", 
+                       "B25003_002E", 
+                       "B25003_003E"
+                    )
+
+df_acs_state <- df_acs_state[acs_vars_2]
+df_acs_county <- df_acs_county[acs_vars_2]
+df_acs_zip <- df_acs_zip[acs_vars_2]
+
+# Compile all acs geo tables using rbind
+df_acs = rbind(df_acs_state, 
+                 df_acs_county, 
+                 df_acs_zip
+               )
+
+# Cleanup
+rm(df_acs_state)
+rm(df_acs_county)
+rm(df_acs_zip)
+```
+```{r}
+### Create ACS analytic variables
+
+df_acs_2 <- mutate(df_acs, 
+                   cvap_calc = B05003_009E + B05003_011E + B05003_020E + B05003_022E, 
+                   cvap_calc_wanh = B05003H_009E + B05003H_011E + B05003H_020E + B05003H_022E, 
+                   cvap_calc_ba = B05003B_009E + B05003B_011E + B05003B_020E + B05003B_022E, 
+                   cvap_calc_hisp = B05003I_009E + B05003I_011E + B05003I_020E + B05003I_022E,
+                   vap_calc_pov = B17020_006E + B17020_007E + B17020_008E + B17020_009E,
+                   cit_calc_pov = B17025_003E + B17025_007E
+                   )
+df_acs_3 <- mutate(df_acs_2, 
+                   cvap_obs = B29001_001E,
+                   cvap_calc_comp = (B29001_001E - cvap_calc) / B29001_001E,
+                   cvap_wanh_pct = cvap_calc_wanh / cvap_calc,
+                   cvap_ba_pct = cvap_calc_ba / cvap_calc,
+                   cvap_hisp_pct = cvap_calc_hisp / cvap_calc,
+                   cvap_bipoc_pct = 1 - (cvap_calc_wanh / cvap_calc),
+                   cvap_pov_pct = B29003_002E / B29003_001E,
+                   vap_pov_pct = vap_calc_pov / (vap_calc_pov + B17020_014E + B17020_015E + B17020_016E + B17020_017E),
+                   cit_pov_pct = cit_calc_pov / (cit_calc_pov + B17025_010E + B17025_014E),
+                   mhhinc = B19013_001E,
+                   hh_rent_pct = B25003_003E / B25003_001E
+                  )
+
+df_acs <- df_acs_3[c("acs_geo_type",
+                       "NAME",
+                       "cvap_obs",
+                       "cvap_bipoc_pct",
+                       "cvap_ba_pct",
+                       "cvap_hisp_pct",
+                       "cvap_pov_pct",
+                       "vap_pov_pct",
+                       "cit_pov_pct",
+                       "hh_rent_pct"
+                       )]
+
+rm(df_acs_2)
+rm(df_acs_3)
+```
+```{r}
+
+## Extract geo summary data on voting behavior from voter file data (currently stored in Redshift cluster)
+
+# This sql query was run in Redshift to extract the summary data table to be infiled.  The source table ts.ntl_current is 257M rows and 996.02 GB.  Records reflect individual PII for all registered voters in the US as of the most recent update (recency of data varies by state.  Currently some states have only partial vote history - full vote history for all states is expected by Q2 2021).
+
+# select 
+#     vb_vf_reg_zip as zip
+#     , count(*) as tot_reg
+#     , count(case when vb_vf_g2020 is not null then 1 else null end) as "2020_voters"
+#     , count(case when vb_vf_g2020 is not null and vb_vf_g2016 is null and vb_vf_g2012 is null and vb_vf_g2008 is null and vb_vf_g2000 is null and vb_vf_g2004 is null then 1 else null end) as "2020_new_voters"
+#     , count(case when vb_vf_registration_date > 20161108 then 1 else null end) as "2020_new_reg"
+#     , count(case when vb_vf_registration_date > 20161108 and vb_vf_g2020 is not null then 1 else null end) as "2020_new_reg_voters"
+#     , case when count(case when vb_vf_g2020 is not null then 1 else null end) > 0 then (count(case when vb_vf_registration_date > 20161108 and vb_vf_g2020 is not null then 1 else null end) * 1.0 / count(case when vb_vf_g2020 is not null then 1 else null end)) else null end as pct_2020_voters_new_reg
+#     , case when count(*) > 0 then (count(case when vb_vf_g2020 is not null then 1 else null end) / count(*)) else null end as pct_2020_total_turnout
+#     , case when count(case when vb_vf_registration_date > 20161108 then 1 else null end) > 0 then (count(case when vb_vf_registration_date > 20161108 and vb_vf_g2020 is not null then 1 else null end) / count(case when vb_vf_registration_date > 20161108 then 1 else null end)) else null end as pct_2020_new_reg_turnout
+# from ts.ntl_current
+# where vb_voterbase_registration_status = 'Registered'
+# and vb_voterbase_deceased_flag is null
+# group by 1
+# order by 1
+
+df_vf_summary_zip <- read.csv("~/TDI/vf_summary_zip.csv", header=TRUE, stringsAsFactors = FALSE, na.strings = c("NA","")) %>% filter(!is.na(zip))
+
+df_acs_zip <- df_acs %>% filter(acs_geo_type == 'Zip')
+
+df_zip_vf_acs <- inner_join(df_acs_zip, df_vf_summary_zip, by = c("NAME" = "zip"))
+
+```
+```{r}
+# Create filtered df for analysis
+
+df_vf_acs_lm_data <- df_zip_vf_acs %>% filter(tot_reg > 9, !is.na(pct_2020_voters_new_reg), !is.na(cvap_bipoc_pct), !is.na(hh_rent_pct))
+
+# Model 1 - share of voters who are newly registered ~ share of population that is non-white
+
+df_vf_acs_lm1 <- lm(pct_2020_voters_new_reg ~ cvap_bipoc_pct, df_vf_acs_lm_data)  # will need to explore missingness further, test for join issues
+summary(df_vf_acs_lm1)
+with(df_vf_acs_lm_data, plot(pct_2020_voters_new_reg, cvap_bipoc_pct))  # will need to explore model fit given that the scatterplot indicates that distribution may be bimodal or require some other approach than simple lm
+abline(df_vf_acs_lm1)  
+
+# Model 2 - share of voters who are newly registered ~ share of renter vs homeowner households 
+
+df_vf_acs_lm2 <- lm(pct_2020_voters_new_reg ~ hh_rent_pct, df_vf_acs_lm_data)  # will need to explore missingness further, test for join issues
+summary(df_vf_acs_lm2)
+with(df_vf_acs_lm_data, plot(pct_2020_voters_new_reg, cvap_bipoc_pct))  # will need to explore model fit given that the scatterplot indicates that distribution may be bimodal or require some other approach than simple lm
+abline(df_vf_acs_lm2) 
+
+# Model 3 - share of voters who are newly registered ~ non-white race and renter share with interaction
+
+df_vf_acs_lm3 <- lm(pct_2020_voters_new_reg ~ cvap_bipoc_pct + hh_rent_pct + (cvap_bipoc_pct * hh_rent_pct), df_vf_acs_lm_data)  # will need to explore missingness further, test for join issues
+summary(df_vf_acs_lm3)
+with(df_vf_acs_lm_data, plot(pct_2020_voters_new_reg, cvap_bipoc_pct))  # will need to explore model fit given that the scatterplot indicates that distribution may be bimodal or require some other approach than simple lm
+abline(df_vf_acs_lm3) 
+
+# Models 1-3 comparison ANOVA - shows that multivariate model is significantly better than bivariate models
+
+anova(df_vf_acs_lm1, df_vf_acs_lm2, df_vf_acs_lm3) 
+```
+```{r}
+
+```
