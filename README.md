@@ -25,7 +25,15 @@ I am also very interested in adding a digital organizing / social listening angl
 
 ## Proof of Concept
 
-While this is clearly a more extensive project, as a proof of concept I have provided two plots and some sample code.
+While this is clearly a more extensive project, as a proof of concept I have provided three models and plots with some sample code.
 
-Plot 1 - this 
+Model 1 - illustrates that there is a statistically significant positive relationship between the percent of the voting population who are new voters in 2020 and the percent of the population who are BIPOC (other than white alone non-hispanic) at the zip code level.
+
+Model 2 - illustrates that there is a statistically significant positive relationship between the percent of the voting population who are new voters in 2020 and the percent of the population who are renters (not homeowners) at the zip code level.  The coefficient for the main predictor and the R^2 value for model 2 are marginally greater than in model 1.
+
+Model 3 - multivariate model indicating that race and renter status are both significant, independent predictors of the percent of the voting population who are new voters in 2020. Includes and interaction term of the two predictors.  
+
+Model comparison ANOVA indicates that the two bivariate models (model 1 and model 2) are similar and there is no statistically significant difference between them, while model 3 is significantly better than either model 1 or model 2.
+
+
 
