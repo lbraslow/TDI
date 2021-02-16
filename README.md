@@ -1,5 +1,5 @@
-# TDI
-Notebooks for TDI application proof of concept
+# Notebooks for TDI application proof of concept
+## Levi Braslow, February 15, 2021
 
 ## Introduction 
 
