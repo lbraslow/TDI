@@ -232,5 +232,7 @@ abline(df_vf_acs_lm3)
 anova(df_vf_acs_lm1, df_vf_acs_lm2, df_vf_acs_lm3) 
 ```
 ```{r}
+![image](https://user-images.githubusercontent.com/58791230/109889553-980c3a00-7c53-11eb-8ce3-779da3e59893.png)
+![image](https://user-images.githubusercontent.com/58791230/109889563-9fcbde80-7c53-11eb-8a60-45bc7a828e55.png)
 
 ```
